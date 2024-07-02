@@ -1,10 +1,10 @@
 import { useReadContract, useWriteContract } from 'wagmi'
-import { abi } from "./abi/NFTMarket.json";
 import { NFT_ADDRESS, NFT_MARKET_ADDRESS } from "./config";
+import NFT_MARKET_ABI from "./abi/NFTMarket.json";
 
 function NFTMarket() {
 
-	interface ListedNFT {
+	interface listedNFTs {
 		// nftAddress: string;
 		// tokenId: bigint;
 		price: bigint;
@@ -12,16 +12,16 @@ function NFTMarket() {
 	}
 
 	const { data: listedNFTs } = useReadContract({
-		abi, 
+		abi: NFT_MARKET_ABI, 
 		address: NFT_MARKET_ADDRESS,
 		functionName: 'isNFTListed',
-	}) as { data: ListedNFT[] | undefined }
+	}) as { data: listedNFTs[] | undefined }
 	
 	const { writeContract } = useWriteContract()
 
 	const handleBuyNFT = (tokenId: string) => {
 		writeContract({
-			abi, 
+			abi: NFT_MARKET_ABI, 
 			address: NFT_MARKET_ADDRESS,
 			functionName: 'buyNFT',
 			args: [
@@ -32,8 +32,8 @@ function NFTMarket() {
 	}
 
 	return (
-		<div className="bg-white rounded-lg shadow-md p-6">
-			<h2 className="text-2xl font-semibold text-gray-800 mb-4">NFT Listing</h2>
+		<div className="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
+			<h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-4">NFT Listing</h2>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				{listedNFTs?.map((nft: any, index: number) => (
 				<div key={index} className="bg-gray-100 rounded-lg p-4 shadow">

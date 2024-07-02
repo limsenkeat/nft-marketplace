@@ -1,109 +1,173 @@
-import { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { parseEther } from 'viem';
+import { Address } from 'viem'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
-import { abi } from "./abi/NFTMarket.json";
-import { abi as nft_abi } from "./abi/MomBirds.json";
-import React from "react";
-import { NFT_ADDRESS, NFT_MARKET_ADDRESS } from "./config";
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { BASE_URL, NFT_ADDRESS, NFT_MARKET_ADDRESS } from "./config";
+import { config } from './wagmi'
+import NFT_MARKET_ABI from "./abi/NFTMarket.json";
+import NFT_ABI from "./abi/MomBirds.json";
 
 function ListNFT() {
 
-	const [nftAddress, setNftAddress] = useState(NFT_ADDRESS)
-	const [tokenId, setTokenId] = useState('')
-	const [price, setPrice] = useState('')
-	const [ownedNFTs, setOwnedNFTs] = useState<number[]>([])
+	const { address, isConnected } = useAccount();
+	const [tokenId, setTokenId] = useState('');
+	const [price, setPrice] = useState('');
+	const [nftAddress, setNftAddress] = useState<`0x${string}`>(NFT_ADDRESS)
+	const { data: result, writeContractAsync } = useWriteContract()
+	const priceInWei = parseEther(price);
+	const [isProcessing, setIsProcessing] = useState(false)
+	const [statusMessage, setStatusMessage] = useState('')
 
-	const { address } = useAccount()
-
-	// 读取用户拥有的 NFT 数量
-	const { data: balanceData } = useReadContract({
-		abi: nft_abi,
-		address: NFT_ADDRESS,
-		functionName: 'balanceOf',
-		args: [address],
+	const { data: isApproved } = useReadContract({
+		address: nftAddress,
+		abi: NFT_ABI,
+		functionName: 'getApproved',
+		args: [tokenId],
+	})
+	
+	const { data: nftOwner } = useReadContract({
+		address: nftAddress,
+		abi: NFT_ABI,
+		functionName: 'ownerOf',
+		args: [tokenId],
 	})
 
-	// 获取用户拥有的所有 NFT 的 tokenId
-	useEffect(() => {
-		const fetchOwnedNFTs = async () => {
-			console.log(balanceData)
-			if (balanceData) {
-				const balance = Number(balanceData)
-				const tokenIds = []
-				for (let i = 0; i < balance; i++) {
-					const { data: tokenId } = await useReadContract({
-						abi: nft_abi, 
-						address: NFT_ADDRESS,
-						functionName: 'isNFTListed',
-						args: [address, i],
-					})
-					if (tokenId) tokenIds.push(Number(tokenId))
+	const { data: isListed } = useReadContract({
+		address: NFT_MARKET_ADDRESS,
+		abi: NFT_MARKET_ABI,
+		functionName: 'isNFTListed',
+		args: [nftAddress, tokenId],
+	})
+	
+	const handleSubmit = async (e: React.FormEvent) => {
+
+		e.preventDefault()
+		setIsProcessing(true)
+		setStatusMessage('')
+		
+		if (nftOwner !== address) {
+			setStatusMessage('Your are not the NFT owner.')
+			setIsProcessing(false)
+			return
+		}
+		
+		if (isListed) {
+			setStatusMessage('The NFT is listed.')
+			setIsProcessing(false)
+			return
+		}
+
+		if (!isApproved || isApproved === '0x0000000000000000000000000000000000000000') {
+			try {
+				
+				const result = await writeContractAsync({
+					address: nftAddress as Address,
+					abi: NFT_ABI,
+					functionName: 'approve',
+					args: [NFT_MARKET_ADDRESS, tokenId],
+				})
+				
+				if (result) {
+					setStatusMessage(`Approval processing.`)
+					await waitForTransactionReceipt(config, { hash: result })
+					setStatusMessage('Approval success, listing in process.')
 				}
-				setOwnedNFTs(tokenIds)
+			} catch (error) {
+				console.log(error);
+				setStatusMessage('Approval fail. Please try again.')
+				setIsProcessing(false)
+				return
 			}
 		}
-		fetchOwnedNFTs()
-	}, [address, balanceData])
+	
+		try {
+			const result = await writeContractAsync({
+				address: NFT_MARKET_ADDRESS,
+				abi: NFT_MARKET_ABI,
+				functionName: 'listNFT',
+				args: [nftAddress, tokenId, priceInWei],
+			})
+			
+			if (result) {
+				await waitForTransactionReceipt(config, { hash: result })
+				setStatusMessage('Your NFT is listed.')
+			}
+		} catch (error) {
+			console.log(error);
+			setStatusMessage('Fail to list your NFT, please try again.')
+		} finally {
+			setIsProcessing(false)
+		}
+	}
 
-	const { writeContract } = useWriteContract()
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		writeContract({
-			abi,
-			address: NFT_MARKET_ADDRESS,
-			functionName: 'listNFT',
-			args: [nftAddress, tokenId, (Number(price) * 10 ** 18)],
-		})
+	if (!isConnected) {
+		return <h2 className="text-2xl font-semibold text-slate-900 dark:text-white text-center mb-8">Please connect your wallet</h2>;
 	}
 
 	return (
-		<div className="bg-white rounded-lg shadow-md p-6">
-		<h2 className="text-2xl font-semibold text-gray-800 mb-4">List NFT</h2>
-		<form onSubmit={handleSubmit} className="space-y-4">
-			<div>
-			<label htmlFor="nftAddress" className="block text-sm font-medium text-gray-700">NFT 合约地址</label>
-			<input
-				id="nftAddress"
-				type="text"
-				className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-				value={nftAddress}
-				disabled 
-				onChange={(e) => setNftAddress(e.target.value)}
-			/>
-			</div>
-			<div>
-			<label htmlFor="tokenId" className="block text-sm font-medium text-gray-700">Token ID</label>
-			<select
-				id="tokenId"
-				className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-				value={tokenId}
-				onChange={(e) => setTokenId(e.target.value)}
-			>
-				<option value="">Select Token ID</option>
-				{ownedNFTs.map((id) => (
-				<option key={id} value={id}>{id}</option>
-				))}
-			</select>
-			</div>
-			<div>
-			<label htmlFor="price" className="block text-sm font-medium text-gray-700">Price (FEA)</label>
-			<input
-				id="price"
-				type="text"
-				className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-				value={price}
-				onChange={(e) => setPrice(e.target.value)}
-			/>
-			</div>
-			<button
-			type="submit"
-			className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-			>
-			List NFT
-			</button>
-		</form>
+		<div className="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
+			<h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-4 ">List Your NFT to Marketplace</h2>
+			{/* <form onSubmit={handleSubmit} className="space-y-4"> */}
+			<form onSubmit={handleSubmit} className="space-y-4">
+				<div>
+					<label htmlFor="tokenId" className="block text-sm font-medium text-slate-500 dark:text-slate-400">Enter NFT Contact Address</label>
+					<input
+						id="nftAddress"
+						type="text"
+						className="bg-gray-50 border border-gray-300 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						value={nftAddress}
+						onChange={(e) => setNftAddress(e.target.value as `0x${string}`)}
+						required
+				/>
+				</div>
+				<div>
+					<label htmlFor="tokenId" className="block text-sm font-medium text-slate-500 dark:text-slate-400">Enter NFT Token ID</label>
+					<input
+						id="tokenId"
+						type="text"
+						className="bg-gray-50 border border-gray-300 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						value={tokenId}
+						onChange={(e) => setTokenId(e.target.value)}
+						required
+				/>
+				</div>
+				<div>
+					<label htmlFor="price" className="block text-sm font-medium text-slate-500 dark:text-slate-400">Price ($FEA)</label>
+					<input
+						id="price"
+						type="text"
+						className="bg-gray-50 border border-gray-300 text-slate-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						value={price}
+						onChange={(e) => setPrice(e.target.value)}
+						required
+					/>
+				</div>
+				<button
+					type="submit"
+					disabled={isProcessing} 
+					className={`w-full font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+				>
+				{isProcessing ? "Listing...." : "List NFT"}
+				</button>
+				{statusMessage && (
+					<div className="text-slate-900 dark:text-white text-balance">
+						{statusMessage}
+						{result && (
+							<a 
+								href={`${BASE_URL}${result}`} 
+								target="_blank" 
+								rel="noopener noreferrer"
+								className="ml-2 text-blue-600 hover:text-blue-800"
+							>
+								View transaction
+							</a>
+						)}
+					</div>
+				)}
+			</form>
 		</div>
-	)
+	);
 }
 
-export default ListNFT
+export default ListNFT;
