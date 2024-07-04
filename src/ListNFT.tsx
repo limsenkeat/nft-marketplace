@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { parseEther } from 'viem';
-import { Address } from 'viem'
+import { parseEther, Address } from 'viem';
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { BASE_URL, NFT_ADDRESS, NFT_MARKET_ADDRESS } from "./config";
@@ -14,7 +13,7 @@ function ListNFT() {
 	const [tokenId, setTokenId] = useState('');
 	const [price, setPrice] = useState('');
 	const [nftAddress, setNftAddress] = useState<`0x${string}`>(NFT_ADDRESS)
-	const { data: result, writeContractAsync } = useWriteContract()
+	const { data: transactionHash, writeContractAsync } = useWriteContract()
 	const priceInWei = parseEther(price);
 	const [isProcessing, setIsProcessing] = useState(false)
 	const [statusMessage, setStatusMessage] = useState('')
@@ -61,17 +60,17 @@ function ListNFT() {
 		if (!isApproved || isApproved === '0x0000000000000000000000000000000000000000') {
 			try {
 				
-				const result = await writeContractAsync({
+				const transactionHash = await writeContractAsync({
 					address: nftAddress as Address,
 					abi: NFT_ABI,
 					functionName: 'approve',
 					args: [NFT_MARKET_ADDRESS, tokenId],
 				})
 				
-				if (result) {
-					setStatusMessage(`Approval processing.`)
-					await waitForTransactionReceipt(config, { hash: result })
-					setStatusMessage('Approval success, listing in process.')
+				if (transactionHash) {
+					setStatusMessage('Approval processing. It may take few minutes.')
+					await waitForTransactionReceipt(config, { hash: transactionHash })
+					setStatusMessage('Approval success, listing in process...')
 				}
 			} catch (error) {
 				console.log(error);
@@ -82,15 +81,16 @@ function ListNFT() {
 		}
 	
 		try {
-			const result = await writeContractAsync({
+			const transactionHash = await writeContractAsync({
 				address: NFT_MARKET_ADDRESS,
 				abi: NFT_MARKET_ABI,
 				functionName: 'listNFT',
 				args: [nftAddress, tokenId, priceInWei],
 			})
 			
-			if (result) {
-				await waitForTransactionReceipt(config, { hash: result })
+			if (transactionHash) {
+				setStatusMessage('Listing your NFT. It may take few minutes.')
+				await waitForTransactionReceipt(config, { hash: transactionHash })
 				setStatusMessage('Your NFT is listed.')
 			}
 		} catch (error) {
@@ -153,9 +153,9 @@ function ListNFT() {
 				{statusMessage && (
 					<div className="text-slate-900 dark:text-white text-balance">
 						{statusMessage}
-						{result && (
+						{transactionHash && (
 							<a 
-								href={`${BASE_URL}${result}`} 
+								href={`${BASE_URL}${transactionHash}`} 
 								target="_blank" 
 								rel="noopener noreferrer"
 								className="ml-2 text-blue-600 hover:text-blue-800"
