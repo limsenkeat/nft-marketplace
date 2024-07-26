@@ -1,57 +1,75 @@
 # NFT Marketplace Demo Screenshots
 
-## Wallet is not connect
-![wallet is not connect](./screenshots/1_wallet_not_connect.png "wallet is not connect")
+## Marketplace
+![light](./screenshots/marketplace_light.png "light")
 
-## Wallet connected
-![wallet connected](./screenshots/2_wallet_connected.png "wallet connected")
+![dark](./screenshots/marketplace_dark.png "dark")
 
 ## NFT Listing
 
-### Not NFT Owner
-Not able to list NFT if you are not the owner. Message display at below of button.
-![not owner](./screenshots/3_not_owner.png "not owner")
+### Select NFT
+![not owner](./screenshots/select_list.png "not owner")
+
+### Listed already listed
+If selected NFT already listied.
+
+![nft listed](./screenshots/select_listed.png "nft listed")
 
 ### Approve NFT
-Check NFT approval, ask for the approval if the token never listed.
-![approve nft](./screenshots/4_approve_nft.png "approve nft")
+![approving nft](./screenshots/approve_list.png "approving nft")
 
 ### Approving NFT
-[View transaction](https://sepolia.etherscan.io/tx/0xb6c73439d365f5d790de24af1506ee145a99241227089a016a12e28bc78a327c)
-![approving nft](./screenshots/5_approving_nft.png "approving nft")
+[View transaction](https://sepolia.etherscan.io/tx/0xa3b46657162505c082d7c846c123c1d1aebfbcf3728bb87b9a1cabcd4a4256e8)
+
+![approving nft](./screenshots/approve_listing.png "approving nft")
 
 ### List NFT
 Approved, process to list NFT.
-![list nft](./screenshots/6_list_nft.png "list nft")
+
+![list nft](./screenshots/approve_listing.png "list nft")
 
 ### NFT Listing
-![listing nft](./screenshots/7_listing_nft.png "listing nft")
+![listing nft](./screenshots/list.png "listing nft")
 
 ### NFT Listed
 NFT listed successful and display in market place.
-[View transaction](https://sepolia.etherscan.io/tx/0x52916eb9a9404d89a4af905fc214475320573c512e71e05a6cacf7f6a38a622c)
-![listed nft](./screenshots/8_listed_nft.png "listed nft")
+[View transaction](https://sepolia.etherscan.io/tx/0x69b5fc153ce3b40ecd1ad82f685102ad071c1ac03f7a7fe577bffb0699bf6af6)
+![listed nft](./screenshots/listed.png "listed nft")
+![listed nft](./screenshots/listed_2.png "listed nft")
 
-### Duplicate Listing
-Not able to list the NFT which already in marketplace. Message display at below of button.
-![duplicate listing](./screenshots/9_duplicate_listing.png "duplicate listing")
+## Unlist NFT
+### Select and unlist NFT
+![unlist nft](./screenshots/unlist.png "unlist nft")
+
+### Unlisting
+![unlisting nft](./screenshots/unlisting.png "unlisting nft")
+
+### Unlisted
+[View transaction](https://sepolia.etherscan.io/tx/0x59ad0075e652dfe805d4b8eb923ea35381c052df50abee5bae73dc786f723e16)
+![unlisted nft](./screenshots/unlisted.png "unlisted nft")
 
 ## Purchase NFT
 ### Approve token spend
 Check token approval with the NFT price, ask for the approval if the allowance less than price.
-![approve token](./screenshots/10_approve_token.png "approve token")
+![approve token](./screenshots/approve_token.png "approve token")
 
 ### Approving token
-[View transaction](https://sepolia.etherscan.io/tx/0x8fb1c883054d2468e455ceee84e58101711834545b8b1c8cc28362cd80c8d188)
-![approving token](./screenshots/11_approving_token.png "approving token")
+[View transaction](https://sepolia.etherscan.io/tx/0xcc8ce462b02be6d71c49663b10b2c3ca04505bc0c3610c45289e1cf109701663)
+![approving token](./screenshots/approving_token.png "approving token")
 
 ### Purchase NFT
 Token approved, process to purchase NFT.
-![buy nft](./screenshots/12_buy_nft.png "buy nft")
+![buy nft](./screenshots/buy_nft.png "buy nft")
 
 ### Purchasing NFT
-![buying nft](./screenshots/13_buying_nft.png "buying nft")
+![buying nft](./screenshots/buying_nft.png "buying nft")
 
-### Purchase Successful
-[View transaction](https://sepolia.etherscan.io/tx/0xe625ebbc2fd5d321a17865ad0e0b13c5cc6815eb0555cbc7a293acde161b758c)
-![bought nft](./screenshots/14_bought_nft.png "bought nft")
+### Purchase successful
+[View transaction](https://sepolia.etherscan.io/tx/0x1127f86a266921b925fe1537bcb686a75d5bdc11973d8ed3fcd1bc6f2912a31b)
+![bought nft](./screenshots/bought_nft.png "bought nft")
+
+### NFT list before purchase
+![before buy](./screenshots/before_buy.png "before buy")
+
+### NFT list after purchase
+![after buy](./screenshots/after_buy.png "after buy")

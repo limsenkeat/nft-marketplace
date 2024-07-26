@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, message, transact
             <p className="mb-4">
                 
                 <a 
-                    href={`${BASE_URL}${transactionHash}`} 
+                    href={`${BASE_URL}tx/${transactionHash}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"

@@ -9,7 +9,7 @@ function NFTList() {
 
 	const [nfts, setNfts] = useState([])
 	const [currentPage, setCurrentPage] = useState(0)
-	const pageSize = 12
+	const pageSize = 9
 	let isPaginationDisabled = true
 	
 	const { data, isError, isLoading } = useReadContract({
@@ -18,17 +18,19 @@ function NFTList() {
 		functionName: 'getAllListedNFTs',
 		args: [BigInt(currentPage * pageSize), BigInt(pageSize)],
 	})
-
+	
 	useEffect(() => {
-		if (data && Array.isArray(data) && data.length === 4) {
-			const [nftContracts, tokenIds, sellers, prices] = data;
+		if (data && Array.isArray(data) && data.length === 5) {
+			const [nftContracts, tokenIds, sellers, prices, listedTime] = data;
 			const formattedNFTs = nftContracts.map((contract: any, index: string | number) => ({
 				contract,
 				tokenId: tokenIds[index],
 				seller: sellers[index],
 				price: formatEther(prices[index]),
+				listedTime: listedTime[index],
 			}));
 			isPaginationDisabled = formattedNFTs.length <= pageSize ? true : false
+			formattedNFTs.reverse();
 			setNfts(formattedNFTs);
 		}
 	}, [data])
@@ -36,13 +38,12 @@ function NFTList() {
 	return (
 		<div>
 			<div className="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
-				<h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-4">NFT LIST</h2>
 				{isLoading ? <div className='text-center text-gray-600 dark:text-gray-100'>Loading...</div> :
 				isError ? <div className='text-center text-gray-600 dark:text-gray-100'>Fail to load NFT list</div> : 
 				<NFTItem nfts={ nfts }/>
 				}
-				<div className="mt-4 flex justify-center">
-					<span className="mx-3 text-slate-900 dark:text-white text-sm">Page: {currentPage + 1}</span>
+				<div className="mt-6 flex justify-center">
+					<span className="mx-3 text-slate-900 dark:text-gray-300 text-sm">Page: {currentPage + 1}</span>
 					<button 
 						className={`px-4 py-1 mx-1 bg-gray-50 dark:bg-gray-800 hover:bg-gray-900 border border-gray-500 text-slate-900 dark:text-white hover:text-white text-xs rounded-lg transition-colors duration-200 ${isPaginationDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
 						disabled={isPaginationDisabled}

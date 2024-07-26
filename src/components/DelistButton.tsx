@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { waitForTransactionReceipt } from '@wagmi/core'
-import { parseEther } from 'viem'
 import { config } from '../wagmi'
 import { TOKEN_ADDRESS, NFT_MARKET_ADDRESS } from "../config";
-import TOKEN_ABI from '../abi/FeatherToken.json'
 import NFT_MARKET_ABI from '../abi/NFTMarket.json'
 import Modal from './MessageModal';
 
@@ -16,13 +14,6 @@ const BuyButton = ({ nft, onBuySuccess }: { nft: any, onBuySuccess: (nft: any) =
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
         hash,
     })
-    
-    const { data: allowance } = useReadContract({
-        address: TOKEN_ADDRESS,
-        abi: TOKEN_ABI,
-        functionName: 'allowance',
-        args: [address, NFT_MARKET_ADDRESS],
-    }) as { data: bigint }
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalTitle, setModalTitle] = useState('')
@@ -36,42 +27,21 @@ const BuyButton = ({ nft, onBuySuccess }: { nft: any, onBuySuccess: (nft: any) =
         setIsModalOpen(true)
     }
 
-    const handleBuy = async () => {
-        
+    const handleDelist = async () => {
         try {
+
+            showModal('Unlist NFT', 'Unlisting NFT...', '')
+            const buyTx = await writeContractAsync({
+                address: NFT_MARKET_ADDRESS,
+                abi: NFT_MARKET_ABI,
+                functionName: 'unlistNFT',
+                args: [nft.contract, nft.tokenId],
+            })
             
-            if (allowance < parseEther(nft.price)) {
-                showModal('Token Approval', 'Approve token usage...', '')
-                const approveTx = await writeContractAsync({
-                    address: TOKEN_ADDRESS,
-                    abi: TOKEN_ABI,
-                    functionName: 'approve',
-                    args: [NFT_MARKET_ADDRESS, parseEther(nft.price)],
-                })
-                
-                showModal('Token Approval', 'Approving, it may take few minutes.', approveTx)
-                await waitForTransactionReceipt(config, { hash: approveTx })
+            showModal('Unlist NFT', 'Unlisting, it may take few minutes.', buyTx)
+            await waitForTransactionReceipt(config, { hash: buyTx })
+            showModal('Unlist NFT', 'NFT unlist successful', buyTx)
 
-            }
-            
-            try {
-
-                showModal('Purchase NFT', 'Purchasing NFT...', '')
-                const buyTx = await writeContractAsync({
-                    address: NFT_MARKET_ADDRESS,
-                    abi: NFT_MARKET_ABI,
-                    functionName: 'buyNFT',
-                    args: [nft.contract, nft.tokenId],
-                })
-                
-                showModal('Purchase NFT', 'Purchasing, it may take few minutes.', buyTx)
-                await waitForTransactionReceipt(config, { hash: buyTx })
-                showModal('Purchase NFT', 'NFT purchase successful', buyTx)
-
-            } catch (error) {
-                setIsModalOpen(false)
-                console.log(error);
-            }
         } catch (error) {
             setIsModalOpen(false)
             console.log(error);
@@ -84,8 +54,8 @@ const BuyButton = ({ nft, onBuySuccess }: { nft: any, onBuySuccess: (nft: any) =
         }
     }, [isSuccess, nft, onBuySuccess]);
 
-    let buttonText = 'Buy'
-    let buttonClass = 'bg-blue-500 hover:bg-blue-600 text-white'
+    let buttonText = 'Unlist'
+    let buttonClass = 'bg-red-500 hover:bg-red-600 text-white'
     if (isPending || isConfirming) {
         buttonText = 'Loading...'
         buttonClass = 'bg-gray-500 text-white cursor-not-allowed'
@@ -100,9 +70,9 @@ const BuyButton = ({ nft, onBuySuccess }: { nft: any, onBuySuccess: (nft: any) =
     return (
         <>
         <button 
-            onClick={handleBuy}
+            onClick={handleDelist}
             disabled={isPending || isConfirming}
-            className={`px-4 py-2 rounded-md font-medium transition-colors duration-200 ${buttonClass}`}
+            className={`w-full bg-red-500 text-white font-medium py-2 px-4 rounded-md hover:bg-red-600 transition-colors duration-200 ${buttonClass}`}
         >
             {buttonText}
         </button>
